@@ -32,7 +32,7 @@ class Recommendation:
 
 class MatrixFactorization:
     """
-    SVD-based collaborative filtering.
+    Biased matrix factorization trained with stochastic gradient descent.
     Learns latent user/item factors to predict missing ratings.
     
     Concept: Every user and song can be described by k latent factors
@@ -55,6 +55,8 @@ class MatrixFactorization:
         self.fitted = False
 
     def fit(self, interactions: List[Interaction]):
+        if not interactions or any(not np.isfinite(i.rating) or not 1<=i.rating<=5 for i in interactions):
+            raise ValueError("Require non-empty interactions with finite ratings 1..5")
         users = sorted(set(i.user_id for i in interactions))
         items = sorted(set(i.song_id for i in interactions))
         self.user_index = {u: i for i, u in enumerate(users)}
@@ -135,9 +137,10 @@ class MusicRecommender:
         for s in songs: self.songs[s.song_id] = s
 
     def fit(self, interactions: List[Interaction]):
+        self.cf.fit(interactions)
+        self.user_history = {}
         for inter in interactions:
             self.user_history.setdefault(inter.user_id, set()).add(inter.song_id)
-        self.cf.fit(interactions)
 
     def recommend(self, user_id: str, top_k: int = 5) -> List[Recommendation]:
         already_heard = self.user_history.get(user_id, set())
@@ -151,7 +154,7 @@ class MusicRecommender:
         else:
             # Cold-start: content-based using most popular songs as seed
             if not already_heard or not songs:
-                return [Recommendation(song=s, score=0.5, reason="Popular pick")
+                return [Recommendation(song=s, score=0.5, reason="Catalog-order fallback (no user preference evidence)")
                         for s in songs[:top_k]]
             seed = self.songs.get(next(iter(already_heard)))
             if not seed: return []

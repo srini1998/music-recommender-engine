@@ -98,3 +98,8 @@ class TestMusicRecommender:
         r, _ = recommender
         for rec in r.recommend("u0", top_k=3):
             assert len(rec.reason) > 0
+
+
+def test_empty_or_nonfinite_training_rejected():
+    with pytest.raises(ValueError): MatrixFactorization().fit([])
+    with pytest.raises(ValueError): MatrixFactorization().fit([Interaction("u","s",float("nan"))])
