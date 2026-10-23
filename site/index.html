@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Side B — Hybrid Artist Recommender</title>
+  <meta name="description" content="Build a seed list of artists and tune a hybrid recommender (co-listening + MusicBrainz genres + diversity re-ranking) trained on one day of CC0 ListenBrainz listens. Offline recall, coverage and novelty shown." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <a class="skip" href="#deck">Skip to the recommender</a>
+  <header class="sleeve">
+    <svg class="sleeve-art" viewBox="0 0 800 520" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+      <rect width="800" height="520" fill="var(--paper)" />
+      <circle cx="610" cy="260" r="250" fill="var(--orange)" />
+      <circle cx="610" cy="260" r="190" fill="var(--ochre)" />
+      <circle cx="610" cy="260" r="130" fill="var(--olive)" />
+      <circle cx="610" cy="260" r="70" fill="var(--brown)" />
+      <circle cx="610" cy="260" r="10" fill="var(--paper)" />
+      <path d="M0 520 A260 260 0 0 1 520 520 Z" fill="var(--brown)" />
+      <path d="M90 520 A170 170 0 0 1 430 520 Z" fill="var(--orange)" />
+      <rect x="0" y="0" width="34" height="520" fill="var(--olive)" />
+      <rect x="44" y="0" width="12" height="520" fill="var(--ochre)" />
+    </svg>
+    <div class="sleeve-copy">
+      <p class="catno">CAT. NO. LB-2736 · 33⅓ · STEREO</p>
+      <h1>Side&nbsp;B</h1>
+      <p class="lede">Pick the artists you already love. A hybrid recommender — co-listening from <strong>one day of real ListenBrainz listens</strong> plus MusicBrainz genres — presses the flip side. Turn the faders to trade accuracy for discovery, and see what that costs on held-out listeners.</p>
+      <p class="facts" id="facts"></p>
+    </div>
+  </header>
+
+  <main id="deck">
+    <section class="deck" aria-label="Recommender">
+      <div class="side side-a">
+        <h2><span class="side-tag">A</span> Your seeds</h2>
+        <div class="label-disc" aria-hidden="true"><span>SIDE A</span></div>
+        <label class="field" for="search">Find an artist in the 1,500-artist crate</label>
+        <input id="search" type="search" autocomplete="off" placeholder="e.g. Portishead, SZA, Metallica" aria-controls="results" />
+        <ul id="results" class="results" aria-label="Search results"></ul>
+        <ol id="seeds" class="tracklist seeds" aria-live="polite"></ol>
+        <p class="hint" id="seed-hint"></p>
+        <div class="crates">
+          <p class="mini">Or pull a crate:</p>
+          <div id="crates" class="crate-row"></div>
+        </div>
+        <div class="faders" role="group" aria-label="Recommender controls">
+          <div class="fader">
+            <label for="alpha">Blend <output id="alpha-out"></output></label>
+            <input id="alpha" type="range" min="0" max="1" step="0.05" />
+            <div class="ends"><span>genre match</span><span>co-listening</span></div>
+          </div>
+          <div class="fader">
+            <label for="lambda">Diversity <output id="lambda-out"></output></label>
+            <input id="lambda" type="range" min="0" max="0.75" step="0.05" />
+            <div class="ends"><span>closest fit</span><span>spread out</span></div>
+          </div>
+          <div class="fader">
+            <label for="beta">Novelty <output id="beta-out"></output></label>
+            <input id="beta" type="range" min="0" max="0.6" step="0.05" />
+            <div class="ends"><span>hits welcome</span><span>deep cuts</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side side-b">
+        <h2><span class="side-tag b">B</span> Pressed for you</h2>
+        <div class="list-stats" id="list-stats" aria-live="polite"></div>
+        <ol id="recs" class="tracklist recs"></ol>
+        <p class="empty" id="recs-empty">Add at least one artist on side A.</p>
+      </div>
+    </section>
+
+    <section class="liner" aria-labelledby="liner-h">
+      <h2 id="liner-h">Liner notes: does it actually work?</h2>
+      <p class="liner-lede" id="protocol"></p>
+      <div class="liner-grid">
+        <figure class="chart-wrap">
+          <svg id="chart" role="img" aria-labelledby="chart-cap"></svg>
+          <figcaption id="chart-cap"></figcaption>
+        </figure>
+        <div class="scorecard" id="scorecard"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="signal-table">
+          <caption>Each signal alone vs. the hybrid (diversity 0, novelty 0) on the same held-out listeners</caption>
+          <thead><tr><th scope="col">Recommender</th><th scope="col">Recall@10</th><th scope="col">Coverage</th><th scope="col">List diversity</th><th scope="col">Novelty (bits)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="credits" aria-labelledby="credits-h">
+      <h2 id="credits-h">Credits &amp; small print</h2>
+      <div class="credit-cols">
+        <div>
+          <h3>Data</h3>
+          <p id="prov"></p>
+          <p>Listener identities never leave the build machine: user names are dropped and ids salted during extraction; this page only ships per-artist aggregates (listener counts, co-listener counts ≥ 3, genre weights).</p>
+        </div>
+        <div>
+          <h3>How it scores</h3>
+          <p>Co-listening: item-kNN cosine over which artists the same listeners played, shrunk by co/(co+5). Genre match: TF-IDF cosine between your seeds' combined MusicBrainz genre profile and each artist. Novelty multiplies relevance by (1 − β·log-popularity). Diversity is maximal-marginal-relevance re-ranking of the top 150 in genre space.</p>
+        </div>
+        <div>
+          <h3>Limits</h3>
+          <ul>
+            <li>One day of listens from people who chose to use ListenBrainz — not a representative audience, and skewed to rock/indie.</li>
+            <li>Artists, not tracks. No audio is analysed; no playback.</li>
+            <li>Offline recall on hidden halves of real histories, not a user study. "Novelty" is a statistic, not taste.</li>
+            <li>Metrics are precomputed on a grid; the live chart snaps to the nearest grid point.</li>
+          </ul>
+          <p>The earlier version of this repo (biased matrix factorisation on an authored toy catalog) is preserved in <code>src/recommender.py</code>; it is not what runs here.</p>
+        </div>
+      </div>
+      <p class="source"><a href="https://github.com/srini1998/music-recommender-engine">Source and pipeline on GitHub</a></p>
+    </section>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
