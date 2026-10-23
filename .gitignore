@@ -8,3 +8,9 @@ build/
 .DS_Store
 venv/
 .venv/
+data/raw/
+data/private/
+node_modules/
+site/node_modules/
+site/dist/
+.vercel

@@ -1,0 +1,15 @@
+{
+  "name": "side-b-recommender",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5216 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --port 5216",
+    "data": "node ../pipeline/build_catalog.mjs && node ../pipeline/evaluate.mjs",
+    "test": "node --test ../tests/engine.test.mjs"
+  },
+  "devDependencies": {
+    "vite": "8.3.4"
+  }
+}
